@@ -1,11 +1,12 @@
-# Swag Labs E2E Automation Framework
-This repository contains an end-to-end automation framework for the **Swag Labs** demo application, built with **Playwright** and **TypeScript**, following a clean **Page Object Model (POM)** architecture.
+#Swag Labs E2E Automation Framework
 
-The primary automated scenario is the **checkout flow for the first two inventory items**, with support for multiple Swag Labs user personas.
+This repository contains an end-to-end automation framework for the **Swag Labs** demo application, built with **Playwright** and **TypeScript**, using a **Page Object Model (POM)** design.
+
+The primary automated scenario is the **checkout flow for the first two inventory items**, with support for multiple Swag Labs user personas and a clear test strategy (smoke, regression, persona-based runs).
 
 ---
 
-## Tech Stack
+## 🔧 Tech Stack
 
 - **Language:** TypeScript  
 - **Test Runner:** Playwright Test  
@@ -15,9 +16,46 @@ The primary automated scenario is the **checkout flow for the first two inventor
 
 ---
 
-## 📁 Project Structure
+## 🎯 Test Strategy
 
-```text
+The framework is designed to support different levels of feedback and coverage:
+
+### Execution Tiers
+
+- **`@smoke`**  
+  Critical happy-path scenarios that must pass for every code change.  
+  Fast, deterministic, and suitable for PR validation.
+
+- **`@regression`**  
+  Broader end-to-end coverage that validates business flows in more depth.  
+  Suitable for nightly or pre-release runs.
+
+- **`@persona`** (planned)  
+  Diagnostic runs using specific Swag Labs personas to observe how the system behaves under different user profiles (e.g., locked-out, glitchy, etc.).  
+  These tests focus on observability and error reporting rather than being strict pass/fail gates.
+
+### Deterministic vs. Random Data
+
+By default, tests use **fixed data** (for example, a constant ZIP code) to keep runs stable and reproducible.
+
+- Fixed data is used in normal runs and CI (reduces flakiness).
+- Optional **Fuzz Mode** can be enabled via an environment variable to generate random ZIP codes and exercise the system with varied inputs:
+
+```bash
+FUZZ_DATA=1 npx playwright test
+Handling Known-Buggy Personas
+Some Swag Labs personas (such as problem_user and locked_out_user) are intentionally broken for testing purposes.
+The framework marks these as expected to fail using Playwright’s test.fail() when they are used in the happy-path checkout test.
+
+This allows:
+
+Flexible use of all personas.
+Clear reports that distinguish between:
+Failures we already expect for a given persona, and
+New regressions that need investigation.
+📁 Project Structure
+text
+Copy
 src/
   pages/          # Page Object classes, UI actions, and assertions
     LoginPage.ts
@@ -42,6 +80,7 @@ tests/
 playwright.config.ts    # Playwright configuration
 tsconfig.json           # TypeScript configuration
 package.json            # NPM scripts and dependencies
+.env.example            # Example environment configuration
 README.md
 🚀 Getting Started
 Prerequisites
@@ -61,56 +100,41 @@ Install Playwright Browsers
 bash
 Copy
 npx playwright install chromium
-🧪 Running Tests
-Run All Tests (Headless)
-bash
-Copy
-npx playwright test
-Run All Tests in Headed Mode (Browser UI Visible)
-bash
-Copy
-npx playwright test --headed
-Run a Specific Test File
-bash
-Copy
-npx playwright test tests/e2e/checkout.spec.ts
-npx playwright test tests/e2e/checkout.spec.ts --headed
-📊 Viewing Test Reports
-Generate & Open the HTML Report
-After any test run:
+⚙️ Environment Configuration
+Configuration is handled via environment variables.
+An example file is provided as .env.example.
 
-bash
-Copy
-npx playwright show-report
-This opens Playwright’s HTML report in your default browser, including:
+Key variables:
 
-Test results by file and test name
-Screenshots (on failure)
-Traces (on retry, if configured)
-Console logs and network information
-👥 User Personas & Environment Variables
-Swag Labs provides multiple predefined users that simulate different behaviours.
-The framework centralizes these in src/data/users.ts and supports them via environment variables.
+SWAG_USERNAME – controls which Swag Labs persona is used
+FUZZ_DATA – toggles random data generation for checkout fields
+CI – set automatically in CI systems
+You can copy .env.example to .env (for local use) and update the values as needed.
+Note: .env should not be committed to version control.
 
-Defined personas:
+👥 User Personas
+Swag Labs exposes multiple personas to simulate different behaviours.
+These are defined centrally in src/data/users.ts and can be selected through the SWAG_USERNAME variable.
+
+Common personas:
 
 standard_user – Normal, stable user (default happy path)
-problem_user – UI / functional issues (used to expose bugs)
-performance_glitch_user – Intentionally slower responses (latency)
-locked_out_user – Login is blocked
+problem_user – UI or functional issues to expose edge cases
+performance_glitch_user – Slow responses to test wait strategies
+locked_out_user – Login is blocked to test error handling
 Default Behaviour (Standard User)
 If you simply run:
 
 bash
 Copy
 npx playwright test --headed
-the framework uses standard_user by default via:
+the framework uses standard_user by default:
 
 ts
 Copy
-username: process.env.SWAG_USERNAME || 'standard_user';
+const effectiveUsername = process.env.SWAG_USERNAME || users.standard.username;
 Running with a Specific Persona
-You can override the user at runtime by setting SWAG_USERNAME:
+You can override the user at runtime:
 
 bash
 Copy
@@ -118,72 +142,127 @@ SWAG_USERNAME=standard_user            npx playwright test --headed
 SWAG_USERNAME=problem_user            npx playwright test --headed
 SWAG_USERNAME=performance_glitch_user npx playwright test --headed
 SWAG_USERNAME=locked_out_user         npx playwright test --headed
-The checkout regression test is designed as a happy-path scenario.
-When executed with known “buggy” personas (e.g. problem_user, locked_out_user),
-the test surfaces clear, persona-aware error messages explaining why the flow did not complete
-(for example, form validation errors on the checkout page such as “Error: Last Name is required”).
+When using personas that are known to be broken in Swag Labs, the framework marks the checkout test as an expected failure and surfaces clear error messages from the application (for example, “Error: Last Name is required” during checkout).
+
+🧪 Running Tests
+The project defines several npm scripts to make test execution easier.
+
+All Tests (default configuration)
+bash
+Copy
+npm test
+# or
+npx playwright test
+Smoke Tests Only
+Runs tests tagged as @smoke (critical paths):
+
+bash
+Copy
+npm run test:smoke
+Regression Tests
+Runs tests tagged as @regression:
+
+bash
+Copy
+npm run test:regression
+Headed Mode (browser UI visible)
+bash
+Copy
+npm run test:headed
+Debug Mode (Playwright Inspector)
+bash
+Copy
+npm run test:debug
+Persona-Focused Run (example)
+bash
+Copy
+npm run test:persona
+# By default this script runs with SWAG_USERNAME=problem_user and @persona tags (if added)
+You can also target the checkout spec directly:
+
+bash
+Copy
+npx playwright test tests/e2e/checkout.spec.ts
+npx playwright test tests/e2e/checkout.spec.ts --headed
+📊 Viewing Test Reports
+HTML Report
+Playwright’s HTML report can be opened after a test run:
+
+bash
+Copy
+npm run test:report
+# or
+npx playwright show-report
+The report includes:
+
+Test results by file and test case
+Screenshots on failure
+Traces (on retry, as configured in playwright.config.ts)
+Console logs and network information
+In CI, an additional JSON report is generated (test-results/results.json) that can be used for dashboards or trend tracking.
 
 🏗 Page Object Model Overview
+Page Objects are used to keep locators and UI-specific logic in one place.
+
 Each Page Object:
 
-Encapsulates locators as private fields
-Exposes high-level actions for tests (e.g. login, addFirstNItems, proceedToCheckout)
-Performs targeted assertions close to the UI, improving reuse and readability
+Holds locators as private fields
+Provides clear, high-level methods (e.g. login, addFirstNItems, proceedToCheckout)
+Encapsulates UI assertions close to where the actions occur
 Key Pages
 LoginPage (src/pages/LoginPage.ts)
-goto() – Navigate to the Swag Labs login page
-login(username, password) – Perform login and assert navigation to the inventory page
+goto() – Navigate to the login page
+login(username, password) – Perform login and verify navigation to the inventory page
 InventoryPage (src/pages/InventoryPage.ts)
-addFirstNItems(count: number): Promise<string[]> – Adds the first N items and returns their names
-openCart() – Navigates to the cart page
+addFirstNItems(count: number) – Adds the first N inventory items and returns their names
+openCart() – Opens the cart page
 CartPage (src/pages/CartPage.ts)
-verifyItemsInCart(expectedItems: string[]) – Asserts that cart contents match expected items
-proceedToCheckout() – Clicks the checkout button and asserts navigation to checkout step one
+verifyItemsInCart(expectedItems: string[]) – Ensures the cart contents match the selected items
+proceedToCheckout() – Navigates to the first checkout step
 CheckoutPage (src/pages/CheckoutPage.ts)
-fillCustomerInfo(firstName, lastName, zipCode) – Completes the customer info form and validates navigation to checkout step two, surfacing validation errors if the form fails
-completeOrder() – Clicks finish and asserts navigation to the completion page
+fillCustomerInfo(firstName, lastName, zipCode) – Fills the checkout form and validates navigation to step two, reporting any validation errors
+completeOrder() – Finishes the order and navigates to the completion page
 OrderCompletePage (src/pages/OrderCompletePage.ts)
 verifyOrderComplete() – Verifies the “Thank you for your order!” confirmation
-🔁 Main Regression Scenario
-tests/e2e/checkout.spec.ts models the main business flow:
+🔁 Main Checkout Scenario
+The main end-to-end test is implemented in tests/e2e/checkout.spec.ts and follows this flow:
 
-Navigate to Swag Labs
-Log in using the selected persona (default: standard_user)
-Add the first two inventory items to the cart
-Verify the selected items in the cart
-Proceed through checkout (step one → step two)
-Complete the order
-Verify the success message: “Thank you for your order!”
-The test is persona-aware:
+Navigate to the Swag Labs site.
+Log in with the selected persona (default: standard_user).
+Add the first two inventory items to the cart.
+Verify the items in the cart.
+Proceed through checkout step one.
+Fill in customer details and continue to step two.
+Complete the order.
+Verify the order confirmation page.
+The test is also aware of which persona is being used and logs this to the console for easier debugging.
 
-For stable personas (e.g. standard_user, performance_glitch_user),
-failures indicate genuine regressions.
-For known “buggy” personas (e.g. problem_user, locked_out_user),
-failures are wrapped with clear context explaining that this is expected behaviour for that user type, and the application’s own error messages are surfaced.
 🧩 Utility Helpers
-Located under src/utils/:
+Located in src/utils/:
 
 RandomHelper
 Generates random numbers and ZIP codes
 Picks random elements from arrays
-Used to provide dynamic data (e.g. random ZIP code during checkout)
 DateHelper
-Provides basic date formatting and date arithmetic helpers
-Ready for future scenarios involving delivery dates, order history, etc.
+Basic date formatting and date arithmetic helpers
 StringHelper
 Generates random strings and emails
-Provides simple capitalization helpers
-Useful for sign-up or profile-editing scenarios when unique values are needed
-These helpers avoid duplication and prepare the framework for additional tests without changing the core structure.
+Basic text utilities
+These helpers are intended to avoid duplication and support future scenarios (such as additional flows or data-driven tests) without changing the core framework.
 
 🔍 Design Considerations
-Maintainability
-Clear separation of pages, data, and utils makes it easy to grow the suite.
-Locators are confined to Page Objects, so UI changes require minimal updates.
-Resilience
-Uses semantic locators (e.g. data-test attributes) and Playwright’s built-in auto-waiting.
-Checkout page includes defensive logic to surface validation errors when navigation fails.
+Separation of Concerns
+Page actions and locators are isolated in Page Objects.
+Test logic is focused on business flow and assertions.
+Data and personas are centralized in the data layer.
+Stability and Flakiness Reduction
+Fixed data by default in CI.
+Retries and traces enabled in CI only.
+Stable selectors using data-test attributes.
 Scalability
-Current scope covers the checkout flow; the architecture can easily accommodate additional flows (sorting, filtering, negative tests, etc.).
-CI/CD Ready
-Personas and credentials can be injected via environment variables (SWAG_USERNAME, SWAG_PASSWORD), making this framework easy to integrate into CI pipelines.
+Structure supports adding more flows (sorting, filtering, negative tests) with minimal changes.
+Tags allow selective execution (smoke vs regression vs persona-focused runs).
+Team Adoption and CI Integration
+NPM scripts make it easy to run common test sets.
+JSON report output can be integrated into dashboards or pipelines.
+Environment variables allow configuration without changing code.
