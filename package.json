@@ -2,11 +2,22 @@
   "name": "swag-labs-automation",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {},
-  "keywords": [],
-  "author": "",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
+    "test:persona": "SWAG_USERNAME=problem_user playwright test --grep @persona",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "ci:smoke": "playwright test --grep @smoke --reporter=list,json",
+    "ci:regression": "playwright test --grep @regression --reporter=list,json"
+  },
+  "keywords": ["playwright", "typescript", "e2e", "pom", "swag-labs"],
+  "author": "Ram Malapati",
   "license": "ISC",
-  "description": "",
+  "description": "Playwright E2E automation framework for Swag Labs using Page Object Model",
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.2.3"
