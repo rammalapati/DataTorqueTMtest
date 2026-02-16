@@ -25,6 +25,7 @@ This project implements the Page Object Model design pattern to separate test lo
    ```bash git clone https://github.com/rammalapati/DataTorqueTMtest.git
 2. Install Dependencies
    npm install
+   
 3.Install Chromium Browser
    npm npx playwright install chromium
    
