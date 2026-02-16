@@ -1,0 +1,13 @@
+# Natural Language Instructions for the AI Agent
+test_name: "Standard User Checkout Flow"
+persona: "standard_user"
+steps:
+  - "Navigate to the login page"
+  - "Login using the standard_user credentials"
+  - "Add the first two products to the shopping cart"
+  - "Open the shopping cart to verify items"
+  - "Click the checkout button to start the process"
+  - "Enter 'John' as first name, 'Doe' as last name, and '12345' as zip"
+  - "Continue to the order overview"
+  - "Finish the order"
+  - "Verify that the 'Thank you for your order' message is displayed"
