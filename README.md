@@ -22,7 +22,7 @@ This project implements the Page Object Model design pattern to separate test lo
 
 ### Installation
 1. Clone the repository:
-   ```bash git clone https://github.com/rammalapati/DataTorqueTMtest.git
+   git clone https://github.com/rammalapati/DataTorqueTMtest.git
 2. Install Dependencies
    npm install
    
