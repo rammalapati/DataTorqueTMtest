@@ -266,3 +266,20 @@ Team Adoption and CI Integration
 NPM scripts make it easy to run common test sets.
 JSON report output can be integrated into dashboards or pipelines.
 Environment variables allow configuration without changing code.
+---
+
+## 🧪 Experimental: Agentic Automation Prototype
+
+In addition to this stable POM framework, I have included an **experimental branch** (`experimental/agentic-automation`) that explores the future of "No-Code" testing using GPT-4 Vision.
+
+### The Vision:
+- **Self-Healing**: AI adapts to UI changes automatically, reducing maintenance debt.
+- **Natural Language**: Tests are defined in plain English via YAML instructions.
+- **Visual Reasoning**: The agent "sees" the page to identify elements and verify outcomes.
+
+### How to Explore:
+1. Switch to the experimental branch: `git checkout experimental/agentic-automation`
+2. View the prototype documentation in `tests/experimental/README.md`.
+3. Review the YAML-driven test engine in `tests/experimental/agentic-checkout.spec.ts`.
+
+*Note: This is an architectural proof-of-concept and is configured to skip gracefully in CI if no API key is present, ensuring zero impact on the stability of the core regression suite.*
